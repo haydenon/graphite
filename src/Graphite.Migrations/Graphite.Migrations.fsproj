@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>dotnet-migrations</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Migration.fs" />
+    <Compile Include="Migrations/1_AddOpenIddict.fs" />
+    <Compile Include="Migrations/2_test.fs" />
+    <Compile Include="Queries.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <DotNetCliToolReference Include="GraphiteMigrations" Version="1.0.0" />
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Immutable;
+using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,6 +12,13 @@ namespace OpenIddict.Dapper
 {
     public class OpenIddictApplicationStore : IOpenIddictApplicationStore<OpenIddictApplication>
     {
+        public OpenIddictApplicationStore(IDbConnection connection)
+        {
+            this.Connection = connection;
+        }
+
+        private IDbConnection Connection { get; }
+
         public Task<long> CountAsync(CancellationToken cancellationToken)
         {
             throw new NotImplementedException();

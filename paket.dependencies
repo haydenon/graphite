@@ -27,6 +27,8 @@ group OpenIddict.Dapper
   nuget OpenIddict ~> 2.0.0-rc2-final
   nuget OpenIddict.Core ~> 2.0.0-rc2-final
 
+  nuget Dapper ~> 1.50.4
+
 group Graphite.Client
   storage: none
   source https://api.nuget.org/v3/index.json
@@ -39,6 +41,18 @@ group Graphite.Client
   nuget Fulma 1.0.0-beta-007
 
   clitool dotnet-fable
+
+group Graphite.Migrations
+  storage: none
+  source ./lib
+  source https://api.nuget.org/v3/index.json
+
+  nuget GraphiteMigrations
+  nuget Microsoft.Extensions.Configuration.EnvironmentVariables ~> 2.0.1
+  nuget Microsoft.Extensions.Configuration.Json ~> 2.0.1
+  nuget Microsoft.Extensions.Configuration ~> 2.0.1
+  nuget Npgsql ~> 3.2.7
+  nuget CommandLineParser ~> 2.2.1
 
 group Build
   source https://api.nuget.org/v3/index.json

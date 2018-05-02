@@ -1,3 +1,4 @@
 group OpenIddict.Dapper
   OpenIddict
   OpenIddict.Core
+  Dapper
