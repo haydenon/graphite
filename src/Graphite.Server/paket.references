@@ -1,0 +1,18 @@
+group Graphite.Server
+  FSharp.Core
+
+  Giraffe
+  Microsoft.AspNetCore
+  Microsoft.AspNetCore.Mvc
+  Microsoft.AspNetCore.StaticFiles
+  Microsoft.AspNetCore.Authentication.JwtBearer
+
+  Fable.Remoting.Giraffe
+
+  Microsoft.DotNet.Watcher.Tools
+  
+  AspNet.Security.OAuth.Validation
+  AspNet.Security.OAuth.Introspection
+  OpenIddict
+  OpenIddict.Core
+  OpenIddict.Mvc

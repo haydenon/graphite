@@ -1,0 +1,46 @@
+group Graphite.Server
+  storage: none
+  source https://api.nuget.org/v3/index.json
+
+  nuget AspNet.Security.OAuth.Introspection ~> 2.0.0-rc2-final
+  nuget AspNet.Security.OAuth.Validation ~> 2.0.0-rc2-final
+  nuget Dapper ~> 1.50.4
+  nuget FSharp.Data.Dapper ~> 2.0.0
+  nuget FSharp.Core
+  nuget Giraffe ~> 1
+  nuget Microsoft.AspNetCore
+  nuget Microsoft.AspNetCore.Authentication.JwtBearer
+  nuget Microsoft.AspNetCore.Mvc
+  nuget Microsoft.AspNetCore.StaticFiles
+  nuget Fable.Remoting.Giraffe ~> 2.6
+
+  nuget OpenIddict ~> 2.0.0-rc2-final
+  nuget OpenIddict.Core ~> 2.0.0-rc2-final
+  nuget OpenIddict.Mvc ~> 2.0.0-rc2-final
+
+  clitool Microsoft.DotNet.Watcher.Tools
+
+group OpenIddict.Dapper
+  storage: none
+  source https://api.nuget.org/v3/index.json
+
+  nuget OpenIddict ~> 2.0.0-rc2-final
+  nuget OpenIddict.Core ~> 2.0.0-rc2-final
+
+group Graphite.Client
+  storage: none
+  source https://api.nuget.org/v3/index.json
+
+  nuget Fable.Core
+  nuget Fable.Elmish.Debugger
+  nuget Fable.Elmish.React
+  nuget Fable.Elmish.HMR
+  nuget Fable.Remoting.Client ~> 2.4
+  nuget Fulma 1.0.0-beta-007
+
+  clitool dotnet-fable
+
+group Build
+  source https://api.nuget.org/v3/index.json
+
+  nuget FAKE
