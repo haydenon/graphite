@@ -7,7 +7,6 @@
   <ItemGroup>
     <Compile Include="Migration.fs" />
     <Compile Include="Migrations/1_AddOpenIddict.fs" />
-    <Compile Include="Migrations/2_test.fs" />
     <Compile Include="Queries.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
