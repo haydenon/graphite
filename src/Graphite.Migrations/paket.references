@@ -1,8 +1,6 @@
 group Graphite.Migrations
   FSharp.Core
 
-  GraphiteMigrations
-
   Microsoft.Extensions.Configuration.EnvironmentVariables
   Microsoft.Extensions.Configuration.Json
   Microsoft.Extensions.Configuration

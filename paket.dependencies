@@ -47,10 +47,9 @@ group Graphite.Client
 
 group Graphite.Migrations
   storage: none
-  source ./lib
   source https://api.nuget.org/v3/index.json
-
-  nuget GraphiteMigrations
+  
+  nuget FSharp.Core
   nuget Microsoft.Extensions.Configuration.EnvironmentVariables ~> 2.0.1
   nuget Microsoft.Extensions.Configuration.Json ~> 2.0.1
   nuget Microsoft.Extensions.Configuration ~> 2.0.1
