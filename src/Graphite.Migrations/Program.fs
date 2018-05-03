@@ -124,7 +124,8 @@ let getSqlForMigration up migrationTable (migration : IMigration) =
         then cmd.Up
         else cmd.Down
     let sql = 
-        migration.Commands
+        let commands = if up then migration.Commands else List.rev migration.Commands
+        commands
         |> List.fold (fun acc cmd -> sprintf "%s%s\n\n" acc (cmdSql cmd)) ""
     let query =
         match up with
