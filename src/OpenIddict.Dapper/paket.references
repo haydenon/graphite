@@ -1,4 +1,7 @@
 group OpenIddict.Dapper
+  FSharp.Core
+
   OpenIddict
   OpenIddict.Core
   Dapper
+  FSharp.Data.Dapper

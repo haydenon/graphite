@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Helpers.fs" />
+    <Compile Include="OpenIddictApplicationStore.fs" />
+    <Compile Include="OpenIddictAuthorizationStore.fs" />
+    <Compile Include="OpenIddictScopeStore.fs" />
+    <Compile Include="OpenIddictTokenStore.fs" />
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

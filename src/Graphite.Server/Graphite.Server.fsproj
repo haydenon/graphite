@@ -4,11 +4,11 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../Graphite.Shared/Shared.fs" />
-    <Compile Include="Server.fs" />
+    <ProjectReference Include="../OpenIddict.Dapper/OpenIddict.Dapper.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../OpenIddict.Dapper/OpenIddict.Dapper.csproj" />
+    <Compile Include="../Graphite.Shared/Shared.fs" />
+    <Compile Include="Server.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

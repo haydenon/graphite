@@ -24,10 +24,13 @@ group OpenIddict.Dapper
   storage: none
   source https://api.nuget.org/v3/index.json
 
+  nuget FSharp.Core
+
   nuget OpenIddict ~> 2.0.0-rc2-final
   nuget OpenIddict.Core ~> 2.0.0-rc2-final
 
   nuget Dapper ~> 1.50.4
+  nuget FSharp.Data.Dapper ~> 2.0.0
 
 group Graphite.Client
   storage: none
