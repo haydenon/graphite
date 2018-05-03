@@ -2,9 +2,11 @@ namespace Graphite.Migrations.Migrations
 
 open Graphite.Migrations
 
-type M1() =
+type Migration1() =
   let up =
-    ""
+    "CREATE TABLE test (
+      test integer
+    );"
 
   let down =
     ""

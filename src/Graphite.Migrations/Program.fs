@@ -14,13 +14,13 @@ let [<Literal>] MigrationNamespace = "Graphite.Migrations.Migrations"
 [<Verb("sql", HelpText = "Generate sql between migrations")>]
 type SqlOptions = {
     [<Value(0, MetaName = "start", Default = 0, HelpText = "Starting migration")>] startMigration : int;
-    [<Value(0, MetaName = "end", Default = Int64.MaxValue, HelpText = "End migration")>] endMigration : int;
+    [<Value(1, MetaName = "end", Default = Int32.MaxValue, HelpText = "End migration")>] endMigration : int;
     [<Option('f', "file", HelpText = "File to save sql to")>] file : string;
 }
 
 [<Verb("update", HelpText = "Update database")>]
 type UpdateOptions = {
-    [<Value(0, MetaName = "Migration", Required = true, HelpText = "Migration to update database to")>] startMigration : int;
+    [<Value(0, MetaName = "Migration", Default = Int32.MaxValue, HelpText = "Migration to update database to")>] migration : int;
 }
 
 [<Verb("list", HelpText = "List migrations")>]
@@ -118,6 +118,34 @@ let validateStartEnd migrations start last =
     | Some _ -> ()
     | None   -> failwith "End migration doesn't exist"
 
+let getSqlForMigration up migrationTable (migration : IMigration) =
+    let cmdSql cmd =
+        if up
+        then cmd.Up
+        else cmd.Down
+    let sql = 
+        migration.Commands
+        |> List.fold (fun acc cmd -> sprintf "%s%s\n" acc (cmdSql cmd)) ""
+    let query =
+        match up with
+        | true  -> Queries.insertMigration
+        | false -> Queries.removeMigration
+    query migrationTable migration
+    |> sprintf "%s%s" sql
+
+let getSql migrationTable (migrations : IMigration []) start last = 
+    validateStartEnd migrations start last
+    let bottom =
+        match start with
+        | 0 -> 0
+        | _ -> (Array.findIndex (isIndex start) migrations) + 1
+    let top = (Array.findIndex (isIndex last) migrations)
+    let indexes = [|bottom..top|]
+    [| for i in indexes -> migrations.[i]|] 
+    |> List.ofArray
+    |> List.map (getSqlForMigration true migrationTable)
+    |> List.reduce (fun acc sql -> sprintf "%s%s\n" acc sql)
+
 let generateSql (opts : SqlOptions) =
     if opts.endMigration <= opts.startMigration then failwith "End migration must be larger than start migration"
     let migrations = getMigrations
@@ -127,25 +155,31 @@ let generateSql (opts : SqlOptions) =
         match opts.endMigration with
         | Int32.MaxValue -> Index.value (Array.last migrations).Index
         | e              -> e
-    validateStartEnd migrations start last
-    let bottom =
-        match start with
-        | 0 -> 0
-        | _ -> (Array.findIndex (isIndex start) migrations) + 1
-    let top = (Array.findIndex (isIndex last) migrations)
-    let indexes = [|bottom..top|]
-    let sql =
-        [| for i in indexes -> migrations.[i]|] 
-        |> List.ofArray
-        |> List.collect (fun m -> m.Commands)
-        |> List.fold (fun acc cmd -> sprintf "%s%s\n" acc cmd.Up) ""
+    let config = getConfig()
+    let migrationTable = (migrationTable config)
+    let sql = getSql migrationTable migrations start last
     if String.IsNullOrWhiteSpace opts.file then
         printfn "%s" sql
     else 
         File.WriteAllText(opts.file, sql)
 
 let updateDatabase (opts : UpdateOptions) =
-    ()
+    let migrations = getMigrations
+    let migration =
+        match opts.migration with
+        | Int32.MaxValue -> Index.value (Array.last migrations).Index
+        | e              -> e
+    let config = getConfig()
+    use connection = connection config
+    let migrationTable = (migrationTable config)
+    initialise noop connection migrationTable
+    let current =
+        match getCurrentMigration connection migrationTable with
+        | Some ind -> ind
+        | None     -> 0
+    if migration <= current then failwith "Migration must be larger than database's current migration"
+    let sql = getSql migrationTable migrations current migration
+    execute connection sql |> ignore
 
 let currentMigration debug = 
     let log = log debug
@@ -167,7 +201,6 @@ let currentMigration debug =
             log <| sprintf "Currently at migration %i - %s" ind currentName
     else
         printfn "%i" current
-
 
 let tryRun f =
     let run () = 
