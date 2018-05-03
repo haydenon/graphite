@@ -9,7 +9,7 @@ type Migration1() =
     );"
 
   let down =
-    ""
+    "DROP TABLE test;"
 
   interface IMigration with
     member _this.Index    = Index.create 1

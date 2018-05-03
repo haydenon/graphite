@@ -125,15 +125,23 @@ let getSqlForMigration up migrationTable (migration : IMigration) =
         else cmd.Down
     let sql = 
         migration.Commands
-        |> List.fold (fun acc cmd -> sprintf "%s%s\n" acc (cmdSql cmd)) ""
+        |> List.fold (fun acc cmd -> sprintf "%s%s\n\n" acc (cmdSql cmd)) ""
     let query =
         match up with
         | true  -> Queries.insertMigration
         | false -> Queries.removeMigration
     query migrationTable migration
-    |> sprintf "%s%s" sql
+    |> sprintf "%s%s\n\n" sql
 
-let getSql migrationTable (migrations : IMigration []) start last = 
+let checkDirection start last =
+    let up = start < last
+    if up then
+        (up, start, last)
+    else
+        (up, last, start)
+
+let getSql migrationTable (migrations : IMigration []) start last =
+    let (up, start, last) = checkDirection start last
     validateStartEnd migrations start last
     let bottom =
         match start with
@@ -141,27 +149,32 @@ let getSql migrationTable (migrations : IMigration []) start last =
         | _ -> (Array.findIndex (isIndex start) migrations) + 1
     let top = (Array.findIndex (isIndex last) migrations)
     let indexes = [|bottom..top|]
-    [| for i in indexes -> migrations.[i]|] 
+    let migrations = [| for i in indexes -> migrations.[i]|] 
+    let migrations = if up then migrations else Array.rev migrations
+    migrations
     |> List.ofArray
-    |> List.map (getSqlForMigration true migrationTable)
+    |> List.map (getSqlForMigration up migrationTable)
     |> List.reduce (fun acc sql -> sprintf "%s%s\n" acc sql)
 
 let generateSql (opts : SqlOptions) =
-    if opts.endMigration <= opts.startMigration then failwith "End migration must be larger than start migration"
-    let migrations = getMigrations
-    if Array.isEmpty migrations then failwith "No migrations to generate sql for"
-    let start = opts.startMigration
-    let last =
-        match opts.endMigration with
-        | Int32.MaxValue -> Index.value (Array.last migrations).Index
-        | e              -> e
-    let config = getConfig()
-    let migrationTable = (migrationTable config)
-    let sql = getSql migrationTable migrations start last
-    if String.IsNullOrWhiteSpace opts.file then
-        printfn "%s" sql
-    else 
-        File.WriteAllText(opts.file, sql)
+    let generate () =
+        let migrations = getMigrations
+        if Array.isEmpty migrations then failwith "No migrations to generate sql for"
+        let start = opts.startMigration
+        let last =
+            match opts.endMigration with
+            | Int32.MaxValue -> Index.value (Array.last migrations).Index
+            | e              -> e
+        let config = getConfig()
+        let migrationTable = (migrationTable config)
+        let sql = getSql migrationTable migrations start last
+        if String.IsNullOrWhiteSpace opts.file then
+            printfn "%s" sql
+        else 
+            File.WriteAllText(opts.file, sql)
+    match opts.endMigration = opts.startMigration with
+    | true ->  failwith "Start and end migration must be different"
+    | false -> generate()
 
 let updateDatabase (opts : UpdateOptions) =
     let migrations = getMigrations
@@ -177,9 +190,14 @@ let updateDatabase (opts : UpdateOptions) =
         match getCurrentMigration connection migrationTable with
         | Some ind -> ind
         | None     -> 0
-    if migration <= current then failwith "Migration must be larger than database's current migration"
-    let sql = getSql migrationTable migrations current migration
-    execute connection sql |> ignore
+    let update () =
+        let sql = getSql migrationTable migrations current migration
+        execute connection sql |> ignore
+    match migration = current with
+    | true  -> ()
+    | false -> update()
+    log true "Done"
+    
 
 let currentMigration debug = 
     let log = log debug
