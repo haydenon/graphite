@@ -9,6 +9,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="../Graphite.Shared/Shared.fs" />
+    <Compile Include="AuthHandler.fs" />
     <Compile Include="Server.fs" />
   </ItemGroup>
   <ItemGroup>
