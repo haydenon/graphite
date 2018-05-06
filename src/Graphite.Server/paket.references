@@ -11,6 +11,8 @@ group Graphite.Server
 
   Microsoft.DotNet.Watcher.Tools
   
+  Npgsql
+  
   AspNet.Security.OAuth.Validation
   AspNet.Security.OAuth.Introspection
   OpenIddict

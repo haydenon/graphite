@@ -5,10 +5,14 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../OpenIddict.Dapper/OpenIddict.Dapper.fsproj" />
+    <ProjectReference Include="../Graphite.UserSecrets/Graphite.UserSecrets.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="../Graphite.Shared/Shared.fs" />
     <Compile Include="Server.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <DotNetCliToolReference Include="Microsoft.Extensions.SecretManager.Tools" Version="2.0.1" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

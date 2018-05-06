@@ -1,5 +1,10 @@
 group OpenIddict.Dapper
   FSharp.Core
+  FSharp.Quotations.Evaluator
+  
+  TaskBuilder.fs
+
+  AutoMapper
 
   OpenIddict
   OpenIddict.Core

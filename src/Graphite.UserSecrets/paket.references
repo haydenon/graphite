@@ -1,0 +1,4 @@
+group Graphite.UserSecrets
+  Microsoft.Extensions.Configuration
+  Microsoft.Extensions.Configuration.UserSecrets
+ 

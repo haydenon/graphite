@@ -1,0 +1,8 @@
+group Graphite.Dapper
+  FSharp.Core
+  
+  TaskBuilder.fs
+
+  Dapper
+  Dapper.Contrib
+  FSharp.Data.Dapper
