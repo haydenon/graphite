@@ -3,74 +3,110 @@ namespace Graphite.Migrations.Migrations
 open Graphite.Migrations
 
 type Migration1() =
-  let scopesUp = "
-CREATE TABLE open_iddict_scopes (
-  \"ConcurrencyToken\" uuid,
-  \"Description\"      varchar(250),
-  \"DisplayName\"      varchar(250),
-  \"Id\"               uuid CONSTRAINT open_iddict_scopes_pk PRIMARY KEY,
-  \"Name\"             varchar(250),
-  \"Properties\"       varchar(1500),
-  \"Resources\"        varchar(1500)
+
+  let schemaUp = "CREATE SCHEMA dbo;"
+  let schemaDown = "DROP SCHEMA dbo;"
+  let userUp = "
+CREATE TABLE dbo.\"IdentityUser\"
+(
+  \"DisplayName\" character varying(256) NOT NULL,
+  \"UserName\" character varying(256) NOT NULL,
+  \"Email\" character varying(256) NOT NULL,
+  \"EmailConfirmed\" boolean NOT NULL,
+  \"PasswordHash\" text,
+  \"SecurityStamp\" character varying(38),
+  \"PhoneNumber\" character varying(50),
+  \"PhoneNumberConfirmed\" boolean,
+  \"TwoFactorEnabled\" boolean NOT NULL,
+  \"LockoutEnd\" timestamp without time zone,
+  \"LockoutEnabled\" boolean NOT NULL,
+  \"AccessFailedCount\" integer NOT NULL,
+  \"Id\" serial NOT NULL,
+  CONSTRAINT \"PK_IdentityUser\" PRIMARY KEY (\"Id\")
+)
+WITH (
+  OIDS=FALSE
 );"
 
-  let scopesDown = "DROP TABLE open_iddict_scopes;"
+  let userDown = "DROP TABLE dbo.\"IdentityUser\";"
 
-  let applicationUp = "
-CREATE TABLE open_iddict_applications (
-  \"ClientId\"               varchar(500),
-  \"ClientSecret\"           varchar(500),
-  \"ConcurrencyToken\"       uuid,
-  \"ConsentType\"            varchar(250),
-  \"DisplayName\"            varchar(250),
-  \"Id\"                     uuid CONSTRAINT open_iddict_applications_pk PRIMARY KEY,
-  \"Permissions\"            varchar(1500),
-  \"PostLogoutRedirectUris\" varchar(1500),
-  \"Properties\"             varchar(1500),
-  \"RedirectUris\"           varchar(1500),
-  \"Type\"                   varchar(250)
+  let roleUp = "
+CREATE TABLE dbo.\"IdentityRole\"
+(
+  \"Id\" serial NOT NULL,
+  \"Name\" character varying(50) NOT NULL,
+  CONSTRAINT \"IdentityRole_pkey\" PRIMARY KEY (\"Id\")
+)
+WITH (
+  OIDS=FALSE
+);
+"
+
+  let roleDown = "DROP TABLE dbo.\"IdentityRole\";"
+
+  let loginUp = "
+CREATE TABLE dbo.\"IdentityLogin\"
+(
+  \"LoginProvider\" character varying(256) NOT NULL,
+  \"ProviderKey\" character varying(128) NOT NULL,
+  \"UserId\" integer NOT NULL,
+  \"Name\" character varying(256) NOT NULL,
+  CONSTRAINT \"IdentityLogin_pkey\" PRIMARY KEY (\"LoginProvider\", \"ProviderKey\", \"UserId\"),
+  CONSTRAINT \"IdentityLogin_UserId_fkey\" FOREIGN KEY (\"UserId\")
+      REFERENCES dbo.\"IdentityUser\" (\"Id\") MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=FALSE
 );"
 
-  let applicationDown = "DROP TABLE open_iddict_applications;"
+  let loginDown = "DROP TABLE dbo.\"IdentityLogin\";"
 
-  let authorizationUp = "
-CREATE TABLE open_iddict_authorizations (
-  \"ApplicationId\"            uuid REFERENCES open_iddict_applications(\"Id\"),
-  \"ConcurrencyToken\"         uuid,
-  \"Id\"                       uuid CONSTRAINT open_iddict_authorizations_pk PRIMARY KEY,
-  \"Properties\"               varchar(1500),
-  \"Scopes\"                   varchar(1500),
-  \"Status\"                   varchar(250),
-  \"Subject\"                  varchar(250),
-  \"Type\"                     varchar(250)
+  let claimUp = "
+CREATE TABLE dbo.\"IdentityUserClaim\"
+(
+  \"Id\" serial NOT NULL,
+  \"UserId\" integer NOT NULL,
+  \"ClaimType\" character varying(256) NOT NULL,
+  \"ClaimValue\" character varying(256),
+  CONSTRAINT \"IdentityUserClaim_pkey\" PRIMARY KEY (\"Id\"),
+  CONSTRAINT \"IdentityUserClaim_UserId_fkey\" FOREIGN KEY (\"UserId\")
+      REFERENCES dbo.\"IdentityUser\" (\"Id\") MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=FALSE
 );"
 
-  let authorizationDown = "DROP TABLE open_iddict_authorizations;"
+  let claimDown = "DROP TABLE dbo.\"IdentityUserClaim\";"
 
-  let tokenUp = "
-CREATE TABLE open_iddict_tokens (
-  \"ApplicationId\"            uuid REFERENCES open_iddict_applications(\"Id\"),
-  \"AuthorizationId\"          uuid REFERENCES open_iddict_authorizations(\"Id\"),
-  \"ConcurrencyToken\"         uuid,
-  \"CreationDate\"             timestamptz,
-  \"ExpirationDate\"           timestamptz,
-  \"Id\"                       uuid CONSTRAINT open_iddict_tokens_pk PRIMARY KEY,
-  \"Payload\"                  varchar(1500),
-  \"Properties\"               varchar(1500),
-  \"ReferenceId\"              varchar(1500),
-  \"Status\"                   varchar(250),
-  \"Subject\"                  varchar(250),
-  \"Type\"                     varchar(250)
+  let userRoleUp = "
+CREATE TABLE dbo.\"IdentityUserRole\"
+(
+  \"UserId\" integer NOT NULL,
+  \"RoleId\" integer NOT NULL,
+  CONSTRAINT \"IdentityUserRole_pkey\" PRIMARY KEY (\"UserId\", \"RoleId\"),
+  CONSTRAINT \"IdentityUserRole_RoleId_fkey\" FOREIGN KEY (\"RoleId\")
+      REFERENCES dbo.\"IdentityRole\" (\"Id\") MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT \"IdentityUserRole_UserId_fkey\" FOREIGN KEY (\"UserId\")
+      REFERENCES dbo.\"IdentityUser\" (\"Id\") MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=FALSE
 );"
 
-  let tokenDown = "DROP TABLE open_iddict_tokens;"
+  let userRoleDown = "DROP TABLE dbo.\"IdentityUserRole\";"
 
   interface IMigration with
     member _this.Index    = Index.create 1
-    member _this.Name     = "Add Open Iddict tables"
+    member _this.Name     = "Add identity tables"
     member _this.Commands = [
-      { Up = scopesUp; Down = scopesDown };
-      { Up = applicationUp; Down = applicationDown };
-      { Up = authorizationUp; Down = authorizationDown };
-      { Up = tokenUp; Down = tokenDown };
+      { Up = schemaUp; Down = schemaDown };
+      { Up = userUp; Down = userDown };
+      { Up = roleUp; Down = roleDown };
+      { Up = loginUp; Down = loginDown };
+      { Up = claimUp; Down = claimDown };
+      { Up = userRoleUp; Down = userRoleDown };
     ]

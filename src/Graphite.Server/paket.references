@@ -6,10 +6,14 @@ group Graphite.Server
   Microsoft.AspNetCore.Mvc
   Microsoft.AspNetCore.StaticFiles
   Microsoft.AspNetCore.Authentication.JwtBearer
+  Microsoft.AspNetCore.Identity
+  Identity.Dapper
+  Identity.Dapper.PostgreSQL
 
   Fable.Remoting.Giraffe
 
   Microsoft.DotNet.Watcher.Tools
+  Microsoft.Extensions.SecretManager.Tools
   
   Npgsql
   

@@ -1,37 +1,82 @@
-module AuthHandler
+module Graphite.AuthHandler
 
-open System.Security.Claims
+open System.Threading.Tasks
+open System.Net
 
 open Giraffe
-open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Authentication
-open AspNet.Security.OpenIdConnect.Primitives
-open AspNet.Security.OpenIdConnect.Server
 
-open FSharp.Control.Tasks.ContextInsensitive
+open Graphite.Flow
+open Graphite.Shared.Views
+open Graphite.Shared.Errors
+open Graphite.Data
+open Graphite.Server.Mapper
+open Graphite.Server.Helpers
+open Graphite.Server.Services
 
-let private signIn (ctx : HttpContext) scheme principal : HttpFuncResult = task {
-  do! ctx.GetService<IAuthenticationService>().SignInAsync(ctx, scheme, principal, null);
-  return Some ctx
-}
+let checkLockout (isLockedOut : string -> bool Task) =
+  !>>=! (fun (model : SignInView) -> task {
+    let! lockedOut = isLockedOut(model.Email)
+    return
+      match lockedOut with
+      | true  -> failure(LockedOut model.Email)
+      | false -> Ok model
+  })
 
-let signInHandler : HttpHandler =
-  fun (next : HttpFunc) (ctx : HttpContext) ->
-    let identity =
-      new ClaimsIdentity(
-        OpenIdConnectServerDefaults.AuthenticationScheme,
-        OpenIdConnectConstants.Claims.Name,
-        OpenIdConnectConstants.Claims.Role);
-    identity.AddClaim(
-      new Claim(
-        OpenIdConnectConstants.Claims.Subject,
-        "71346D62-9BA5-4B6D-9ECA-755574D628D8",
-        OpenIdConnectConstants.Destinations.AccessToken))
-    identity.AddClaim(
-      new Claim(
-        OpenIdConnectConstants.Claims.Name,
-        "Alice",
-        OpenIdConnectConstants.Destinations.AccessToken));
-    let principal = new ClaimsPrincipal(identity);
-    let scheme = OpenIdConnectServerDefaults.AuthenticationScheme
-    signIn ctx scheme principal
+let passwordSignIn (trySignIn : string * string * bool -> bool Task) = 
+  !>>=! (fun (model : SignInView) -> task {
+    let! result = trySignIn(model.Email, model.Password, model.RememberMe)
+    return
+      match result with
+      | true  -> Ok model
+      | false -> failure(IncorrectUserOrPassword model.Email)
+  })
+
+let getUserFromEmail (getUser : string -> User Option Task) mapUser =
+  !>>=! (fun (model : SignInView) -> task {
+    let! user = getUser model.Email
+    return
+      match user with
+      | Some user -> mapUser user |> Ok
+      | None      -> unexpectedFailure()
+  })
+
+let signIn
+  (validate : Validator<SignInView>)
+  (checkLockout : ActionStep<SignInView>)
+  (passwordSignIn : ActionStep<SignInView>) 
+  (getUserFromEmail : ActionStep<SignInView, UserView>)
+  (view : SignInView) =
+  validate view
+  |> checkLockout
+  |> passwordSignIn
+  |> getUserFromEmail
+
+let signInIfNotAuthenticated isAuthenticated currentUser signIn usr =
+  match isAuthenticated() with
+  | true -> currentUser() |> Task.map (Option.get >> Ok)
+  | false -> signIn usr
+
+let signInWithServices : Action<SignInView, UserView> =
+  fun (services : IServices) (model : SignInView) ->
+    let usr = services.Get<UserService>()
+    let isAuthenticated = usr.IsAuthenticated
+    let currentUser = usr.CurrentUser >> Task.map (Option.map mapUser)
+    let validate u = Ok u |> Task.value
+    let checkLockout = (checkLockout usr.IsLockedOut)
+    let passwordSignIn = passwordSignIn usr.PasswordSignIn
+    let getUserFromEmail = getUserFromEmail usr.GetUserByEmail mapUser
+    let signIn =
+      signIn validate checkLockout passwordSignIn getUserFromEmail
+    signInIfNotAuthenticated isAuthenticated currentUser signIn model
+
+let signInApi result =
+  match result with
+  | Ok  value -> Success value
+  | Error err -> Failure(err, HttpStatusCode.BadRequest)
+
+let authHandler : HttpHandler =
+  choose [
+    POST >=> choose [
+      routex "/signin(/?)" >=> returnMessage signInWithServices signInApi
+    ]
+  ]

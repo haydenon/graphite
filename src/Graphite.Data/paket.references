@@ -1,0 +1,11 @@
+group Graphite.Data
+  FSharp.Core
+
+  TaskBuilder.fs
+
+  Dapper
+  Dapper.Contrib
+  FSharp.Data.Dapper
+  
+  Identity.Dapper
+  Identity.Dapper.PostgreSQL

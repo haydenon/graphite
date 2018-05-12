@@ -4,8 +4,11 @@ type Counter = int
 
 module Route =
   /// Defines how routes are generated on server and mapped from client
-  let builder typeName methodName = 
-    sprintf "/api/%s/%s" typeName methodName
+  let server typeName methodName = 
+    sprintf "/%s/%s" typeName methodName
+  
+  let client typeName methodName =
+    sprintf "/api/remote/%s/%s" typeName methodName
 
 /// A type that specifies the communication protocol for client and server
 /// Every record field must have the type : 'a -> Async<'b> where 'a can also be `unit`

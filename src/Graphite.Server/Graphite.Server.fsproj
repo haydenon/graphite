@@ -5,15 +5,21 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../OpenIddict.Dapper/OpenIddict.Dapper.fsproj" />
+    <ProjectReference Include="../Graphite.Data/Graphite.Data.fsproj" />
     <ProjectReference Include="../Graphite.UserSecrets/Graphite.UserSecrets.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="../Graphite.Shared/Shared.fs" />
+    <Compile Include="../Graphite.Shared/Error.fs" />
+    <Compile Include="../Graphite.Shared/Views.fs" />
+    <Compile Include="Mapper.fs" />
+    <Compile Include="Helpers.fs" />
+    <Compile Include="Services.fs" />
+    <Compile Include="Flow.fs" />
+    <Compile Include="Validation.fs" />
+    <Compile Include="RequestHelper.fs" />
     <Compile Include="AuthHandler.fs" />
     <Compile Include="Server.fs" />
-  </ItemGroup>
-  <ItemGroup>
-    <DotNetCliToolReference Include="Microsoft.Extensions.SecretManager.Tools" Version="2.0.1" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
