@@ -26,7 +26,7 @@ open Identity.Dapper.Models
 
 open Graphite.Shared
 open Graphite.Dapper
-open Graphite.AuthHandler
+open Graphite.Server.AuthHandler
 open Graphite.Server.Services
 open Graphite.Data
 

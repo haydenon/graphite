@@ -1,4 +1,4 @@
-module Graphite.AuthHandler
+module Graphite.Server.AuthHandler
 
 open System.Threading.Tasks
 open System.Net

@@ -1,12 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Migration.fs" />
-    <Compile Include="Migrations/1_AddIdentity.fs" />
-    <Compile Include="Queries.fs" />
+    <ProjectReference Include="../../src/Graphite.Server/Graphite.Server.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AuthHandlerTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

@@ -2,8 +2,6 @@ group Graphite.Server
   storage: none
   source https://api.nuget.org/v3/index.json
 
-  nuget AspNet.Security.OAuth.Introspection ~> 2.0.0-rc2-final
-  nuget AspNet.Security.OAuth.Validation ~> 2.0.0-rc2-final
   nuget Dapper ~> 1.50.4
   nuget Npgsql ~> 3.2.7
   nuget FSharp.Data.Dapper ~> 2.0.0
@@ -17,10 +15,6 @@ group Graphite.Server
   nuget Identity.Dapper ~> 0.8.1-alpha
   nuget Identity.Dapper.PostgreSQL ~> 0.8.1-alpha
   nuget Fable.Remoting.Giraffe ~> 2.6
-
-  nuget OpenIddict ~> 2.0.0-rc2-final
-  nuget OpenIddict.Core ~> 2.0.0-rc2-final
-  nuget OpenIddict.Mvc ~> 2.0.0-rc2-final
 
   clitool Microsoft.DotNet.Watcher.Tools
   clitool Microsoft.Extensions.SecretManager.Tools ~> 2.0.1
@@ -52,23 +46,6 @@ group Graphite.Data
   nuget Identity.Dapper ~> 0.8.1-alpha
   nuget Identity.Dapper.PostgreSQL ~> 0.8.1-alpha
 
-group OpenIddict.Dapper
-  storage: none
-  source https://api.nuget.org/v3/index.json
-
-  nuget FSharp.Core
-  nuget FSharp.Quotations.Evaluator ~> 1.1.2
-
-  nuget TaskBuilder.fs ~> 1.1.1
-
-  nuget OpenIddict ~> 2.0.0-rc2-final
-  nuget OpenIddict.Core ~> 2.0.0-rc2-final
-
-  nuget Dapper ~> 1.50.4
-  nuget FSharp.Data.Dapper ~> 2.0.0
-
-  nuget AutoMapper ~> 6.2.2
-
 group Graphite.Client
   storage: none
   source https://api.nuget.org/v3/index.json
@@ -99,6 +76,20 @@ group Graphite.UserSecrets
 
   nuget Microsoft.Extensions.Configuration ~> 2.0.1
   nuget Microsoft.Extensions.Configuration.UserSecrets ~> 2.0.1
+
+group Graphite.Tests
+  storage: none
+  source https://api.nuget.org/v3/index.json
+
+  nuget FSharp.Core
+
+  nuget Microsoft.NET.Test.Sdk ~> 15.6.0
+  nuget xunit ~> 2.3.1
+  nuget xunit.runner.visualstudio ~> 2.3.1
+  nuget FsCheck ~> 2.10.10
+  nuget FsCheck.Xunit ~> 2.10.10
+
+  clitool dotnet-xunit ~> 2.3.1
 
 group Build
   source https://api.nuget.org/v3/index.json

@@ -4,8 +4,8 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../OpenIddict.Dapper/OpenIddict.Dapper.fsproj" />
     <ProjectReference Include="../Graphite.Data/Graphite.Data.fsproj" />
+    <ProjectReference Include="../Graphite.Dapper/Graphite.Dapper.fsproj" />
     <ProjectReference Include="../Graphite.UserSecrets/Graphite.UserSecrets.csproj" />
   </ItemGroup>
   <ItemGroup>

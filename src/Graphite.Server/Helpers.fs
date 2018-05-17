@@ -11,6 +11,8 @@ module Task =
   }
   let value = Task.FromResult
 
+  let result (tsk : 'a Task) = tsk.Result
+
 let (|NotNull|_|) value = 
   if obj.ReferenceEquals(value, null) then None 
   else Some()

@@ -16,9 +16,3 @@ group Graphite.Server
   Microsoft.Extensions.SecretManager.Tools
   
   Npgsql
-  
-  AspNet.Security.OAuth.Validation
-  AspNet.Security.OAuth.Introspection
-  OpenIddict
-  OpenIddict.Core
-  OpenIddict.Mvc

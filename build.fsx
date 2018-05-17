@@ -6,6 +6,7 @@ open Fake
 
 let serverPath = "./src/Graphite.Server" |> FullName
 let clientPath = "./src/Graphite.Client" |> FullName
+let testPath = "./test/Graphite.Tests" |> FullName
 let deployDir = "./deploy" |> FullName
 
 let platformTool tool winTool =
@@ -52,6 +53,10 @@ Target "RestoreServer" (fun () ->
 Target "Build" (fun () ->
   run dotnetCli "build" serverPath
   run dotnetCli "fable webpack -- -p" clientPath
+)
+
+Target "Test" (fun () ->
+  run dotnetCli "test" testPath
 )
 
 Target "Run" (fun () ->
