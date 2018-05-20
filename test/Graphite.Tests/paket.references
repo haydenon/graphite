@@ -6,3 +6,6 @@ group Graphite.Tests
   xunit.runner.visualstudio
 
   dotnet-xunit
+
+  FsCheck
+  FsCheck.Xunit

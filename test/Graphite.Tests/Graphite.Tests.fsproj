@@ -6,6 +6,8 @@
     <ProjectReference Include="../../src/Graphite.Server/Graphite.Server.fsproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Generators.fs" />
+    <Compile Include="ModelTests.fs" />
     <Compile Include="AuthHandlerTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

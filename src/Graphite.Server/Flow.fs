@@ -1,4 +1,4 @@
-module Graphite.Flow
+module Graphite.Server.Flow
 
 open System.Threading.Tasks
 open System.Net
@@ -6,9 +6,9 @@ open Microsoft.AspNetCore.Http
 
 open Giraffe
 
-open Shared.Errors
-open Server.Services
-open Server.Helpers
+open Graphite.Shared.Errors
+open Services
+open Helpers
 
 type AppResult<'T> = Result<'T, AppError>
 
@@ -18,11 +18,10 @@ let failure (error : AppError) =
 let unexpectedFailure () =
   failure UnexpectedError
 
-let successTask value =
+let success value =
   value
   |> Result.Ok
-  |> Task.FromResult
-
+  |> Task.value
 
 type Validator<'T> = 'T -> 'T AppResult Task
 
@@ -80,6 +79,9 @@ let (!>>=!) func =
 
 let (!>>=) func =
   bindFromTask func
+
+let map func =
+  !>>= (func >> Ok)
 
 let tryRun (func : 'a -> 'b AppResult Task) error input =
   try 

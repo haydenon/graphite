@@ -5,6 +5,7 @@ open Microsoft.AspNetCore.Identity
 
 open Graphite.Data
 open Graphite.Server.Helpers
+open Graphite.Server.Mapper
 open System.Security.Claims
 open FSharp.Control.Tasks.ContextInsensitive
 
@@ -18,7 +19,7 @@ type UserService(ctxAccessor : IHttpContextAccessor, usrMng: UserManager<User>, 
     then usr.Identity.IsAuthenticated
     else false
 
-  member _this.User () = ctx.User
+  member private _this.User () = ctx.User
 
   member this.IsAuthenticated () =
     let user = this.User()
@@ -27,7 +28,7 @@ type UserService(ctxAccessor : IHttpContextAccessor, usrMng: UserManager<User>, 
   member this.CurrentUser () =
     let user = this.User()
     match isAuthenticated user with
-    | true  -> usrMng.GetUserAsync(user) |> Task.map Some
+    | true  -> usrMng.GetUserAsync(user) |> Task.map mapFromUserModel
     | false -> Task.value None
   
   member _this.IsLockedOut email = task {
@@ -47,6 +48,6 @@ type UserService(ctxAccessor : IHttpContextAccessor, usrMng: UserManager<User>, 
     let! usr = usrMng.FindByEmailAsync email
     return
       match usr with
-      | NotNull -> Some usr
+      | NotNull -> mapFromUserModel usr
       | _ -> None
   }

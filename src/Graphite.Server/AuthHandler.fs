@@ -5,13 +5,14 @@ open System.Net
 
 open Giraffe
 
-open Graphite.Flow
-open Graphite.Shared.Views
-open Graphite.Shared.Errors
-open Graphite.Data
+open Graphite.Server.Flow
 open Graphite.Server.Mapper
 open Graphite.Server.Helpers
 open Graphite.Server.Services
+open Graphite.Server.Models
+
+open Graphite.Shared.Views
+open Graphite.Shared.Errors
 
 let checkLockout (isLockedOut : string -> bool Task) =
   !>>=! (fun (model : SignInView) -> task {
@@ -31,12 +32,12 @@ let passwordSignIn (trySignIn : string * string * bool -> bool Task) =
       | false -> failure(IncorrectUserOrPassword model.Email)
   })
 
-let getUserFromEmail (getUser : string -> User Option Task) mapUser =
+let getUserFromEmail (getUser : string -> User Option Task) =
   !>>=! (fun (model : SignInView) -> task {
     let! user = getUser model.Email
     return
       match user with
-      | Some user -> mapUser user |> Ok
+      | Some user -> user |> Ok
       | None      -> unexpectedFailure()
   })
 
@@ -44,30 +45,31 @@ let signIn
   (validate : Validator<SignInView>)
   (checkLockout : ActionStep<SignInView>)
   (passwordSignIn : ActionStep<SignInView>) 
-  (getUserFromEmail : ActionStep<SignInView, UserView>)
+  (getUserFromEmail : ActionStep<SignInView, User>)
   (view : SignInView) =
   validate view
   |> checkLockout
   |> passwordSignIn
   |> getUserFromEmail
 
-let signInIfNotAuthenticated isAuthenticated currentUser signIn usr =
+let signInIfNotAuthenticated isAuthenticated currentUser signIn mapUser usr =
   match isAuthenticated() with
   | true -> currentUser() |> Task.map (Option.get >> Ok)
   | false -> signIn usr
+  |> Flow.map mapUser
 
 let signInWithServices : Action<SignInView, UserView> =
   fun (services : IServices) (model : SignInView) ->
     let usr = services.Get<UserService>()
     let isAuthenticated = usr.IsAuthenticated
-    let currentUser = usr.CurrentUser >> Task.map (Option.map mapUser)
+    let currentUser = usr.CurrentUser// >> Task.map (Option.map mapUser)
     let validate u = Ok u |> Task.value
     let checkLockout = (checkLockout usr.IsLockedOut)
     let passwordSignIn = passwordSignIn usr.PasswordSignIn
-    let getUserFromEmail = getUserFromEmail usr.GetUserByEmail mapUser
+    let getUserFromEmail = getUserFromEmail usr.GetUserByEmail //mapUser
     let signIn =
       signIn validate checkLockout passwordSignIn getUserFromEmail
-    signInIfNotAuthenticated isAuthenticated currentUser signIn model
+    signInIfNotAuthenticated isAuthenticated currentUser signIn mapUser model
 
 let signInApi result =
   match result with
