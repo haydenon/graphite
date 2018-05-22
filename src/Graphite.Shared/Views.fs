@@ -7,6 +7,14 @@ type SignInView = {
   RememberMe : bool
 }
 
+[<CLIMutable>]
+type RegisterView = {
+  Email       : string
+  DisplayName : string
+  Password    : string
+}
+
+[<CLIMutable>]
 type UserView = {
   Email       : string
   DisplayName : string

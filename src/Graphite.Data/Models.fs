@@ -4,5 +4,5 @@ open System
 open Identity.Dapper.Entities
 
 type User() =
-  inherit DapperIdentityUser<Guid>()
+  inherit DapperIdentityUser()
   member val DisplayName: string = null with get, set

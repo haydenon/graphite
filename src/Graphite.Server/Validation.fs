@@ -1,5 +1,6 @@
-module Graphite.Validation
+module Graphite.Server.Validation
 
-// type Validator() =
-//   member _this.Valiate validateFunc =
-//     validateFunc 
+let withSource source result  =
+  match result with
+  | Error err -> Error(err, source)
+  | Ok v      -> Ok v

@@ -1,13 +1,15 @@
 module Graphite.Server.Flow
 
-open System.Threading.Tasks
+open System
 open System.Net
+open System.Threading.Tasks
+
 open Microsoft.AspNetCore.Http
 
 open Giraffe
 
 open Graphite.Shared.Errors
-open Services
+// open Services
 open Helpers
 
 type AppResult<'T> = Result<'T, AppError>
@@ -29,7 +31,7 @@ type ActionStep<'T> = 'T AppResult Task -> 'T AppResult Task
 
 type ActionStep<'T, 'R> = 'T AppResult Task -> 'R AppResult Task
 
-type Action<'T, 'R> = IServices -> 'T -> AppResult<'R> Task
+type Action<'T, 'R> = IServiceProvider -> 'T -> AppResult<'R> Task
 
 let bind func input =
   match input with
@@ -107,9 +109,9 @@ type ApiResult<'T> =
     | Success of 'T
     | Failure of ApiFailure
 
-type ApiAction<'T, 'R> = IServices -> 'T -> ApiResult<'R> Task
+type ApiAction<'T, 'R> = IServiceProvider -> 'T -> ApiResult<'R> Task
 
-let toApiAction (action : IServices -> 'a AppResult) mapFailure =
+let toApiAction (action : IServiceProvider -> 'a AppResult) mapFailure =
   (fun services ->
     let result = action services
     match result with
@@ -133,9 +135,9 @@ let private toJson = function
 | Success model -> json model |> noCache
 | Failure err -> returnError err
 
-type HttpContextServices(ctx: HttpContext) =
-  interface IServices with
-    member _this.Get<'TService> () = ctx.GetService<'TService>()
+// type HttpContextServices(ctx: HttpContext) =
+//   interface IServiceProvider with
+//     member _this.Get<'TService> () = ctx.GetService<'TService>()
   
 let getModel<'T> (ctx : HttpContext) : 'T AppResult Task =
   task {
@@ -153,7 +155,7 @@ let mapToApi (mapper : AppResult<'R> -> ApiResult<'R>) (result : 'R AppResult Ta
 
 let returnMessage (f : Action<'T, 'R>) (mapper : AppResult<'R> -> ApiResult<'R>) : HttpHandler =
   fun next ctx ->
-    let f = f (HttpContextServices(ctx))
+    let f = f ctx.RequestServices
     tryRun getModel<'T> BadModel ctx
     |> !>>=! f
     |> mapToApi mapper
@@ -165,7 +167,7 @@ let noContent (f : Action<'T, 'R>) (mapper : AppResult<'R> -> ApiResult<'R>) : H
     | Success _ -> noCache(setStatusCode 204)
     | Failure err -> returnError err
   fun next ctx ->
-    let f = f (HttpContextServices(ctx))
+    let f = f ctx.RequestServices
     tryRun getModel<'T> BadModel ctx
     |> !>>=! f
     |> mapToApi mapper

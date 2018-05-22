@@ -2,15 +2,9 @@ module Graphite.Server.Mapper
 
 open Graphite
 open Graphite.Server.Models
+open Graphite.Server.Validation
 open Graphite.Shared.Views
-
-type OptionBuilder() =
-    member _t.Bind(v,f) = Option.bind f v
-    member _t.Return v = Some v
-    member _t.ReturnFrom o = o
-    member _t.Zero () = None
-
-let opt = OptionBuilder()
+open Graphite.Shared.Errors
 
 let mapUser (user : User) : UserView =
   {
@@ -18,9 +12,10 @@ let mapUser (user : User) : UserView =
     DisplayName = WrappedString.value user.DisplayName
   }
 
-let mapFromUserModel (user : Data.User) : User option = opt {
-  let! email   = EmailAddress.create user.Email
-  let! display = WrappedString.stringNonEmpty256 user.DisplayName
+let mapFromUserModel (user : Data.User) : Result<User, (ValidationError * string)> = res {
+  // Use the username. The email field is normalised.
+  let! email   = EmailAddress.create user.UserName |> withSource "email"
+  let! display = WrappedString.stringNonEmpty256 user.DisplayName |> withSource "display name"
   return {
     Email       = email
     DisplayName = display

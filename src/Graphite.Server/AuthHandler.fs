@@ -1,7 +1,10 @@
 module Graphite.Server.AuthHandler
 
+open System
 open System.Threading.Tasks
 open System.Net
+
+open Microsoft.Extensions.DependencyInjection
 
 open Giraffe
 
@@ -10,6 +13,7 @@ open Graphite.Server.Mapper
 open Graphite.Server.Helpers
 open Graphite.Server.Services
 open Graphite.Server.Models
+open Graphite.Server.Validation
 
 open Graphite.Shared.Views
 open Graphite.Shared.Errors
@@ -23,34 +27,71 @@ let checkLockout (isLockedOut : string -> bool Task) =
       | false -> Ok model
   })
 
-let passwordSignIn (trySignIn : string * string * bool -> bool Task) = 
+let passwordSignIn (trySignIn : string * string * bool -> User option Task) = 
   !>>=! (fun (model : SignInView) -> task {
     let! result = trySignIn(model.Email, model.Password, model.RememberMe)
     return
       match result with
-      | true  -> Ok model
-      | false -> failure(IncorrectUserOrPassword model.Email)
+      | Some user -> Ok user
+      | None      -> failure(IncorrectUserOrPassword model.Email)
   })
 
-let getUserFromEmail (getUser : string -> User Option Task) =
-  !>>=! (fun (model : SignInView) -> task {
-    let! user = getUser model.Email
+let userSignIn (trySignIn : User -> bool Task) =
+  !>>=! (fun (usr : User) -> task {
+    let! result = trySignIn usr
     return
-      match user with
-      | Some user -> user |> Ok
-      | None      -> unexpectedFailure()
+      match result with
+      | true  -> Ok usr
+      | false -> unexpectedFailure()
   })
+
+type RegisterDetails = EmailAddress.T * WrappedString.StringNonEmpty256 * string
+
+let createUser (tryCreate : RegisterDetails -> User AppResult Task) =
+  !>>=! (fun (view : RegisterView) -> task {
+    let details = res {
+      let! email = EmailAddress.create view.Email |> withSource "email"
+      let! displayName = WrappedString.stringNonEmpty256 view.DisplayName |> withSource "display name"
+      return (email, displayName, view.Password)
+    }
+    return!
+      match details with
+      | Ok details  -> tryCreate details
+      | Error error -> Task.value(failure(ValidationFailures [error]))
+  })
+
+let register
+  (createUser : ActionStep<RegisterView, User>)
+  (signIn : ActionStep<User>)
+  (view : RegisterView) =
+  success view
+  |> createUser
+  |> signIn
+  
+let registerIfNotAuthenticated isAuthenticated currentUser register mapUser view =
+  match isAuthenticated() with
+  | true -> currentUser() |> Task.map (Option.get >> Ok)
+  | false -> register view
+  |> Flow.map mapUser
+
+let registerWithServices : Action<RegisterView, UserView> =
+  fun (services : IServiceProvider) (model : RegisterView) ->
+    let usr = services.GetRequiredService<UserService>()
+    let isAuthenticated = usr.IsAuthenticated
+    let currentUser = usr.CurrentUser
+    let createUser = createUser usr.CreateUser
+    let signIn = userSignIn usr.UserSignIn
+    let register =
+      register createUser signIn
+    registerIfNotAuthenticated isAuthenticated currentUser register mapUser model
 
 let signIn
-  (validate : Validator<SignInView>)
   (checkLockout : ActionStep<SignInView>)
-  (passwordSignIn : ActionStep<SignInView>) 
-  (getUserFromEmail : ActionStep<SignInView, User>)
+  (passwordSignIn : ActionStep<SignInView, User>) 
   (view : SignInView) =
-  validate view
+  success view
   |> checkLockout
   |> passwordSignIn
-  |> getUserFromEmail
 
 let signInIfNotAuthenticated isAuthenticated currentUser signIn mapUser usr =
   match isAuthenticated() with
@@ -59,19 +100,17 @@ let signInIfNotAuthenticated isAuthenticated currentUser signIn mapUser usr =
   |> Flow.map mapUser
 
 let signInWithServices : Action<SignInView, UserView> =
-  fun (services : IServices) (model : SignInView) ->
-    let usr = services.Get<UserService>()
+  fun (services : IServiceProvider) (model : SignInView) ->
+    let usr = services.GetRequiredService<UserService>()
     let isAuthenticated = usr.IsAuthenticated
-    let currentUser = usr.CurrentUser// >> Task.map (Option.map mapUser)
-    let validate u = Ok u |> Task.value
+    let currentUser = usr.CurrentUser
     let checkLockout = (checkLockout usr.IsLockedOut)
     let passwordSignIn = passwordSignIn usr.PasswordSignIn
-    let getUserFromEmail = getUserFromEmail usr.GetUserByEmail //mapUser
     let signIn =
-      signIn validate checkLockout passwordSignIn getUserFromEmail
+      signIn checkLockout passwordSignIn
     signInIfNotAuthenticated isAuthenticated currentUser signIn mapUser model
 
-let signInApi result =
+let defaultApi result =
   match result with
   | Ok  value -> Success value
   | Error err -> Failure(err, HttpStatusCode.BadRequest)
@@ -79,6 +118,7 @@ let signInApi result =
 let authHandler : HttpHandler =
   choose [
     POST >=> choose [
-      routex "/signin(/?)" >=> returnMessage signInWithServices signInApi
+      routex "/signin(/?)" >=> returnMessage signInWithServices defaultApi
+      routex "/register(/?)" >=> returnMessage registerWithServices defaultApi
     ]
   ]

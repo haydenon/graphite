@@ -1,7 +1,13 @@
 module Graphite.Shared.Errors
 
+type ValidationError =
+  | MinLength of int
+  | MaxLength of int
+  | NullValue
+  | InvalidFormat of string
+
 type AppError =
-  | ValidationFailures of string list
+  | ValidationFailures of (ValidationError * string) list // Validation error * source
   | NotFound
   // Authenication
   | NotAuthenticated
@@ -18,10 +24,18 @@ type AppError =
   | BadModel
   | UnexpectedError
 
+let validationMessage err (source : string) =
+  let source = source.ToLower()
+  match err with
+  | MinLength len -> sprintf "The %s value is smaller than the minimum charater length of %i" source len
+  | MaxLength len -> sprintf "The %s value is larger than the maximum charater length of %i" source len
+  | NullValue -> sprintf "You must provide the %s value" source
+  | InvalidFormat format -> sprintf "The %s must be a proper %s" source format
+
 let message =
   function
   | UnexpectedError -> ["An unexpected error occurred" ]
-  | ValidationFailures(errors) -> errors
+  | ValidationFailures(errors) -> List.map (fun err -> validationMessage (fst err) (snd err)) errors
   | DuplicateEmailAddress(_) -> [ "The email address provided is already in use" ]
   | PasswordMustContain -> [ "Password must be 8 characters or longer" ]
   | IncorrectUserOrPassword(_) -> [ "Incorrect email address or password" ]

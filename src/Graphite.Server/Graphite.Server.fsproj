@@ -12,12 +12,12 @@
     <Compile Include="../Graphite.Shared/Shared.fs" />
     <Compile Include="../Graphite.Shared/Error.fs" />
     <Compile Include="../Graphite.Shared/Views.fs" />
+    <Compile Include="Helpers.fs" />
+    <Compile Include="Validation.fs" />
     <Compile Include="Models.fs" />
     <Compile Include="Mapper.fs" />
-    <Compile Include="Helpers.fs" />
-    <Compile Include="Services.fs" />
     <Compile Include="Flow.fs" />
-    <Compile Include="Validation.fs" />
+    <Compile Include="Services.fs" />
     <Compile Include="RequestHelper.fs" />
     <Compile Include="AuthHandler.fs" />
     <Compile Include="Server.fs" />

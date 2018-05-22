@@ -103,8 +103,8 @@ let configureServices (environment : string) (config : IConfiguration) (services
     .AddCookie(cookieAuth environment) |> ignore
   services.ConfigureDapperConnectionProvider<PostgreSqlConnectionProvider>(config.GetSection("DapperIdentity"))
     .ConfigureDapperIdentityCryptography(config.GetSection("DapperIdentityCryptography")) |> ignore
-  services.AddIdentity<User, DapperIdentityRole<Guid>>(Action<IdentityOptions> configureIdentity)
-    .AddDapperIdentityFor<PostgreSqlConfiguration, Guid>()
+  services.AddIdentity<User, DapperIdentityRole>(Action<IdentityOptions> configureIdentity)
+    .AddDapperIdentityFor<PostgreSqlConfiguration>()
     .AddDefaultTokenProviders() |> ignore
   services.AddSingleton<DapperIdentityOptions>(new DapperIdentityOptions()) |> ignore
   services.AddScoped<UserService>() |> ignore
