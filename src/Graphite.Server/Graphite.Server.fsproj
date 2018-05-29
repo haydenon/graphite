@@ -19,7 +19,7 @@
     <Compile Include="Flow.fs" />
     <Compile Include="Services.fs" />
     <Compile Include="RequestHelper.fs" />
-    <Compile Include="AuthHandler.fs" />
+    <Compile Include="Handlers/AuthHandler.fs" />
     <Compile Include="Server.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

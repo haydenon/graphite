@@ -1,4 +1,4 @@
-module Graphite.Server.AuthHandler
+module Graphite.Server.Handlers.Auth
 
 open System
 open System.Threading.Tasks
@@ -8,6 +8,7 @@ open Microsoft.Extensions.DependencyInjection
 
 open Giraffe
 
+open Graphite.Server
 open Graphite.Server.Flow
 open Graphite.Server.Mapper
 open Graphite.Server.Helpers

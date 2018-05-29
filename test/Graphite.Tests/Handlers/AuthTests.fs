@@ -3,7 +3,7 @@ namespace Graphite.Tests
 open FsCheck.Xunit
 
 open Generators
-open Graphite.Server.AuthHandler
+open Graphite.Server.Handlers.Auth
 open Graphite.Server.Flow
 open Graphite.Server.Helpers
 open Graphite.Server.Models
