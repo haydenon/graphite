@@ -6,6 +6,7 @@
   <ItemGroup>
     <Compile Include="Migration.fs" />
     <Compile Include="Migrations/1_AddIdentity.fs" />
+    <Compile Include="Migrations/2_AddRecords.fs" />
     <Compile Include="Queries.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
