@@ -1,6 +1,7 @@
 module Graphite.Server.Services 
 
 open System
+open System.Security.Claims
 
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Identity
@@ -8,12 +9,14 @@ open Microsoft.AspNetCore.Identity
 open FSharp.Control.Tasks.ContextInsensitive
 
 open Graphite.Data
+
 open Graphite.Server
 open Graphite.Server.Mapper
-open Graphite.Shared.Errors
-open System.Security.Claims
 
-type RegisterDetails = Models.EmailAddress.T * Models.WrappedString.StringNonEmpty256 * string
+open Graphite.Shared.DataTypes
+open Graphite.Shared.Errors
+
+type RegisterDetails = EmailAddress.T * WrappedString.StringNonEmpty256 * string
 
 type UserService(ctxAccessor : IHttpContextAccessor, usrMng: UserManager<User>, sgnMng: SignInManager<User>) =
   let ctx = ctxAccessor.HttpContext
@@ -22,7 +25,7 @@ type UserService(ctxAccessor : IHttpContextAccessor, usrMng: UserManager<User>, 
     then usr.Identity.IsAuthenticated
     else false
 
-  let errorForCreateResult (error : IdentityError) email =
+  let errorForCreateResult email (error : IdentityError) =
     match error.Code with
     | "DuplicateUserName" -> DuplicateEmailAddress email
     | StartsWith "Password" -> PasswordMustContain
@@ -41,9 +44,18 @@ type UserService(ctxAccessor : IHttpContextAccessor, usrMng: UserManager<User>, 
       usrMng.GetUserAsync(user)
       |> Task.map (fun usr -> 
         match usr with
-        | NotNull -> mapFromUserModel usr |> Option.fromResult
+        | NotNull -> User.mapFromModel usr |> Option.fromResult
         | _ -> None)
     | false -> Task.value None
+
+  member this.CurrentUserId () =
+    let user = this.User()
+    match isAuthenticated user with
+    | true  ->
+      match Int32.TryParse(usrMng.GetUserId user) with
+      | (true, id) -> Some id
+      | _ -> None
+    | false -> None
   
   member _this.IsLockedOut email = task {
     let! user = usrMng.FindByEmailAsync(email)
@@ -61,12 +73,12 @@ type UserService(ctxAccessor : IHttpContextAccessor, usrMng: UserManager<User>, 
       let! usr = this.GetUserByEmail(email)
       return
         match usr with
-        | Some usr -> mapFromUserModel usr |> Option.fromResult
+        | Some usr -> User.mapFromModel usr |> Option.fromResult
         | _ -> None
   }
 
   member this.UserSignIn (usr : Models.User) = task {
-    let! usr = this.GetUserByEmail(Models.WrappedString.value usr.Email)
+    let! usr = this.GetUserByEmail(WrappedString.value usr.Email)
     if Option.isNone usr then
       return false
     else
@@ -77,19 +89,16 @@ type UserService(ctxAccessor : IHttpContextAccessor, usrMng: UserManager<User>, 
 
   member _this.CreateUser (details : RegisterDetails) = task {
     let (email, displayName, password) = details
-    let email = Models.WrappedString.value email
+    let email = WrappedString.value email
     let user = User()
     user.Email <- email
     user.UserName <- email
-    user.DisplayName <- Models.WrappedString.value displayName
+    user.DisplayName <- WrappedString.value displayName
     let! result = usrMng.CreateAsync(user, password)
     return
       match result.Succeeded with
-      | true  -> 
-        match mapFromUserModel user with
-        | Error err -> Error(ValidationFailures [err])
-        | Ok ok -> Ok ok
-      | false -> Error (errorForCreateResult (Seq.head result.Errors) email)
+      | true  -> User.mapFromModel user
+      | false -> List.ofSeq (Seq.map (errorForCreateResult email) result.Errors) |> Error
   }
   
   member private _this.GetUserByEmail email = task {

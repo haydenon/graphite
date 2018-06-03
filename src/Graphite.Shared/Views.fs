@@ -19,3 +19,9 @@ type UserView = {
   Email       : string
   DisplayName : string
 }
+
+[<CLIMutable>]
+type StoreView = {
+  Id   : string
+  Name : string
+}

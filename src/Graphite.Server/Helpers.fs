@@ -2,6 +2,7 @@
 module Graphite.Server.Helpers
 
 open System.Threading.Tasks
+
 open FSharp.Control.Tasks.ContextInsensitive
 
 module Task =
@@ -20,10 +21,10 @@ module Option =
     | _        -> None
 
 type OptionBuilder() =
-    member _t.Bind(v,f) = Option.bind f v
-    member _t.Return v = Some v
-    member _t.ReturnFrom o = o
-    member _t.Zero () = None
+    member __.Bind(v,f) = Option.bind f v
+    member __.Return v = Some v
+    member __.ReturnFrom o = o
+    member __.Zero () = None
 
 let opt = OptionBuilder()
 
@@ -36,11 +37,16 @@ module Result =
   let isOk = function
     | Ok _ -> true
     | _ -> false
+  
+  let fromOption opt ifErr =
+    match opt with
+    | Some value -> Ok value
+    | None -> Error ifErr
 
 type ResultBuilder() =
-    member _t.Bind(v,f) = Result.bind f v
-    member _t.Return v = Ok v
-    member _t.ReturnFrom r = r
+    member __.Bind(v,f) = Result.bind f v
+    member __.Return v = Ok v
+    member __.ReturnFrom r = r
 
 let res = ResultBuilder()
 
@@ -51,3 +57,9 @@ let (|NotNull|_|) value =
 let (|StartsWith|_|) (arg : string) (value : string) =
   if not(isNull value) && value.StartsWith(arg) then Some ()
   else None
+
+let tryFun1 f inp =
+  try
+    Some(f inp)
+  with
+  | _ -> None

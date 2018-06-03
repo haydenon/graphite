@@ -3,6 +3,8 @@ module Graphite.Tests.Generators
 open FsCheck
 
 open Graphite.Shared.Views
+open Graphite.Shared.DataTypes
+
 open Graphite.Server.Helpers
 open Graphite.Server.Models
 

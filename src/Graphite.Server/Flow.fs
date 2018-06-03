@@ -9,16 +9,29 @@ open Microsoft.AspNetCore.Http
 open Giraffe
 
 open Graphite.Shared.Errors
-// open Services
-open Helpers
 
-type AppResult<'T> = Result<'T, AppError>
+type AppResult<'T> = Result<'T, AppError list>
 
-let failure (error : AppError) =
-  Result.Error error
+module AppResult =
+  let private apply (f : AppResult<('a -> 'b)>) (value : AppResult<'a>) =
+    match (f, value) with
+    | (Ok func, Ok value) -> Ok(func value)
+    | (Error err1, Error err2) -> Error(List.concat [err1; err2])
+    | (Error err, _) | (_, Error err) -> Error(err)
+
+  let (<!>) (f : 'a -> 'b) (value : AppResult<'a>) : AppResult<'b> =
+    match value with
+    | Ok ok -> f ok |> Ok
+    | Error err -> Error err
+
+  let (<*>) (f : AppResult<('a -> 'b)>) (value : AppResult<'a>) : AppResult<'b> =
+    apply f value
+
+let failure (errors : AppError list) =
+  Result.Error errors
 
 let unexpectedFailure () =
-  failure UnexpectedError
+  failure [UnexpectedError]
 
 let success value =
   value
@@ -31,7 +44,9 @@ type ActionStep<'T> = 'T AppResult Task -> 'T AppResult Task
 
 type ActionStep<'T, 'R> = 'T AppResult Task -> 'R AppResult Task
 
-type Action<'T, 'R> = IServiceProvider -> 'T -> AppResult<'R> Task
+type AppAction<'T> = IServiceProvider -> 'T -> AppResult<'T> Task
+
+type AppAction<'T, 'R> = IServiceProvider -> 'T -> AppResult<'R> Task
 
 let bind func input =
   match input with
@@ -89,7 +104,7 @@ let tryRun (func : 'a -> 'b AppResult Task) error input =
   try 
     func input
   with
-  | _ -> failure error |> Task.FromResult
+  | _ -> failure [error] |> Task.FromResult
 
 let teeAsync (func : 'a -> Task<unit>) input : 'a AppResult Task =
   task {
@@ -103,7 +118,7 @@ let tee (func : 'a -> unit) input : 'a AppResult =
  
 let noCache handler = setHttpHeader "Cache-Control" "no-store,no-cache" >=> handler
 
-type ApiFailure = AppError * HttpStatusCode
+type ApiFailure = AppError list * HttpStatusCode
 
 type ApiResult<'T> =
     | Success of 'T
@@ -145,7 +160,7 @@ let getModel<'T> (ctx : HttpContext) : 'T AppResult Task =
     return
       match model with
       | NotNull -> Ok model 
-      | _       -> failure BadModel
+      | _       -> failure [BadModel]
   }
 
 let mapToApi (mapper : AppResult<'R> -> ApiResult<'R>) (result : 'R AppResult Task) = task {
@@ -153,7 +168,7 @@ let mapToApi (mapper : AppResult<'R> -> ApiResult<'R>) (result : 'R AppResult Ta
   return mapper result
 }
 
-let returnMessage (f : Action<'T, 'R>) (mapper : AppResult<'R> -> ApiResult<'R>) : HttpHandler =
+let returnMessage (f : AppAction<'T, 'R>) (mapper : AppResult<'R> -> ApiResult<'R>) : HttpHandler =
   fun next ctx ->
     let f = f ctx.RequestServices
     tryRun getModel<'T> BadModel ctx
@@ -161,7 +176,7 @@ let returnMessage (f : Action<'T, 'R>) (mapper : AppResult<'R> -> ApiResult<'R>)
     |> mapToApi mapper
     |> endWith (fun r -> toJson r next ctx)
 
-let noContent (f : Action<'T, 'R>) (mapper : AppResult<'R> -> ApiResult<'R>) : HttpHandler =
+let noContent (f : AppAction<'T, 'R>) (mapper : AppResult<'R> -> ApiResult<'R>) : HttpHandler =
   let toStatus =
     function
     | Success _ -> noCache(setStatusCode 204)

@@ -20,7 +20,7 @@ module AuthHandler =
       success view
       |> checkLockout (fun _email -> Task.value true)
       |> Task.result
-    let expected = Error(LockedOut view.Email)
+    let expected = Error [LockedOut view.Email]
     result = expected
 
   [<Property>]
@@ -38,7 +38,7 @@ module AuthHandler =
       success view
       |> passwordSignIn (fun _signIn -> Task.value None)
       |> Task.result
-    let expected = Error(IncorrectUserOrPassword view.Email)
+    let expected = Error [IncorrectUserOrPassword view.Email]
     result = expected
 
   [<Property>]
@@ -75,7 +75,7 @@ module AuthHandler =
       success view
       |> createUser (fun _details -> Task.value(Ok user))
       |> Task.result
-    let expected = Error(ValidationFailures [(InvalidFormat "email", "email")])
+    let expected = Error [ValidationFailure (InvalidFormat "email", "email")]
     result = expected
 
   [<Property>]

@@ -1,6 +1,5 @@
 ﻿open System
 open System.IO
-open System.Threading.Tasks
 
 open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Builder
@@ -13,10 +12,11 @@ open Microsoft.Extensions.Logging
 
 open Giraffe
 
-open Fable.Remoting.Giraffe
-
 open Npgsql
 open Microsoft.Extensions.Configuration
+
+open Hashids
+open Hashids.HashidConfiguration
 
 open Identity.Dapper
 open Identity.Dapper.Entities
@@ -24,9 +24,9 @@ open Identity.Dapper.PostgreSQL.Models
 open Identity.Dapper.PostgreSQL.Connections
 open Identity.Dapper.Models
 
-open Graphite.Shared
 open Graphite.Dapper
-open Graphite.Server.Handlers.Auth
+open Graphite.Server.Handlers.Helpers
+open Graphite.Server.Handlers.Api
 open Graphite.Server.Services
 open Graphite.Data
 
@@ -36,26 +36,10 @@ let isDevelopment (environment : string) =
 let clientPath = Path.Combine("..","Graphite.Client") |> Path.GetFullPath
 let port = 8085us
 
-let getInitCounter<'Provider> (ctx : 'Provider) : Task<Counter> = task {
-  printfn "%A" ctx
-  return 42
-}
-
-type ICounterProtocol<'Provider> = {
-  getInitCounter : 'Provider -> Counter Async
-}
-
 let webApp : HttpHandler =
-  let counterProtocol : ICounterProtocol<IServiceProvider> = {
-    getInitCounter = getInitCounter<IServiceProvider> >> Async.AwaitTask
-  }
-  // creates a HttpHandler for the given implementation
-  let remote = remoting counterProtocol {
-    use_route_builder Route.server
-  }
   choose [
-      subRoute "/api/auth" authHandler
-      subRoute "/api/remote" remote
+      subRoute "/api" apiHandler
+      // subRoute "/api/remote" remote
   ]
 
 let cookieAuth environment (options : CookieAuthenticationOptions) =
@@ -80,8 +64,6 @@ let configureIdentity (options : IdentityOptions) =
   lockout.DefaultLockoutTimeSpan <- TimeSpan.FromMinutes(5.0);
   lockout.MaxFailedAccessAttempts <- 5; 
   lockout.AllowedForNewUsers <- true;
-
-let internalServerError : HttpHandler = setStatusCode 500 >=> json (dict ["message", "An unexpected error occurred"]) //(toErrorModel [UnexpectedError])
 
 let errorHandler (ex : Exception) (logger : ILogger) =
     logger.LogError(EventId(), ex, "An unhandled exception has occurred while executing the request.")
@@ -109,6 +91,10 @@ let configureServices (environment : string) (config : IConfiguration) (services
   services.AddSingleton<DapperIdentityOptions>(new DapperIdentityOptions()) |> ignore
   services.AddScoped<UserService>() |> ignore
   services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>() |> ignore
+  let hashidConfig = HashidConfiguration.create {
+    HashidConfiguration.defaultOptions with Salt = config.GetValue("HashIdSalt"); MinimumLength = 8
+  }
+  services.AddSingleton<HashidConfiguration>(hashidConfig) |> ignore
 
 let getConfig configRoot (environment : string) =
     let mutable settings =

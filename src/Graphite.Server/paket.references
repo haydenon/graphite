@@ -12,6 +12,8 @@ group Graphite.Server
 
   Fable.Remoting.Giraffe
 
+  hashids-fs
+
   Microsoft.DotNet.Watcher.Tools
   Microsoft.Extensions.SecretManager.Tools
   

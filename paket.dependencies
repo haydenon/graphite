@@ -15,6 +15,7 @@ group Graphite.Server
   nuget Identity.Dapper ~> 0.8.1-alpha
   nuget Identity.Dapper.PostgreSQL ~> 0.8.1-alpha
   nuget Fable.Remoting.Giraffe ~> 2.6
+  nuget hashids-fs ~> 2.0.0
 
   clitool Microsoft.DotNet.Watcher.Tools
   clitool Microsoft.Extensions.SecretManager.Tools ~> 2.0.1

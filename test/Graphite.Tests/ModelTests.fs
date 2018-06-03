@@ -6,7 +6,9 @@ open Generators
 
 open Graphite.Server.Models
 open Graphite.Server.Helpers
+
 open Graphite.Shared.Errors
+open Graphite.Shared.DataTypes
 
 [<Properties(Arbitrary=[| typeof<EmailGenerator>; typeof<StrNonEmp256Generator> |])>]
 module Models =
